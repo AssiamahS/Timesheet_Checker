@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timesheet Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #days {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .day {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            background-color: grey;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #question {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #yes {
+            background-color: green;
+            color: white;
+        }
+        #no {
+            background-color: red;
+            color: white;
+        }
+        .calendar-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Timesheet Checker</h1>
+        <div class="calendar-nav">
+            <button id="prev-week">Previous Week</button>
+            <button id="next-week">Next Week</button>
+        </div>
+        <div id="days">
+            <div class="day" id="monday">Mon</div>
+            <div class="day" id="tuesday">Tue</div>
+            <div class="day" id="wednesday">Wed</div>
+            <div class="day" id="thursday">Thu</div>
+            <div class="day" id="friday">Fri</div>
+        </div>
+        <div id="question"></div>
+        <button id="yes">Yes</button>
+        <button id="no">No</button>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+            let currentWeek = 0;
+            const timesheetStatus = {};
+
+            function getMonday(d) {
+                d = new Date(d);
+                const day = d.getDay(),
+                    diff = d.getDate() - day + (day === 0 ? -6 : 1);
+                return new Date(d.setDate(diff));
+            }
+
+            function updateCalendar() {
+                const monday = getMonday(new Date());
+                monday.setDate(monday.getDate() + currentWeek * 7);
+                for (let i = 0; i < days.length; i++) {
+                    const dayElement = document.getElementById(days[i]);
+                    const date = new Date(monday);
+                    date.setDate(monday.getDate() + i);
+                    dayElement.dataset.date = date.toISOString().split('T')[0];
+                    const status = timesheetStatus[dayElement.dataset.date];
+                    dayElement.style.backgroundColor = status === 'yes' ? 'green' : status === 'no' ? 'red' : 'grey';
+                }
+                updateQuestion();
+            }
+
+            function updateQuestion() {
+                const today = new Date();
+                const dayIndex = today.getDay() - 1;
+                if (dayIndex >= 0 && dayIndex < 5) {
+                    const todayElement = document.getElementById(days[dayIndex]);
+                    const date = todayElement.dataset.date;
+                    const status = timesheetStatus[date];
+                    if (status === undefined) {
+                        document.getElementById('question').textContent = `Did you complete your timesheet for ${days[dayIndex]}?`;
+                        document.getElementById('yes').style.display = 'inline-block';
+                        document.getElementById('no').style.display = 'inline-block';
+                    } else {
+                        document.getElementById('question').textContent = '';
+                        document.getElementById('yes').style.display = 'none';
+                        document.getElementById('no').style.display = 'none';
+                    }
+                } else {
+                    document.getElementById('question').textContent = 'Enjoy your weekend!';
+                    document.getElementById('yes').style.display = 'none';
+                    document.getElementById('no').style.display = 'none';
+                }
+            }
+
+            document.getElementById('yes').addEventListener('click', () => updateStatus('yes'));
+            document.getElementById('no').addEventListener('click', () => updateStatus('no'));
+
+            function updateStatus(answer) {
+                const today = new Date();
+                const dayIndex = today.getDay() - 1;
+                if (dayIndex >= 0 && dayIndex < 5) {
+                    const todayElement = document.getElementById(days[dayIndex]);
+                    const date = todayElement.dataset.date;
+                    timesheetStatus[date] = answer;
+                    updateCalendar();
+                }
+            }
+
+            document.getElementById('prev-week').addEventListener('click', () => {
+                currentWeek--;
+                updateCalendar();
+            });
+
+            document.getElementById('next-week').addEventListener('click', () => {
+                currentWeek++;
+                updateCalendar();
+            });
+
+            days.forEach(day => {
+                document.getElementById(day).addEventListener('click', () => {
+                    const date = document.getElementById(day).dataset.date;
+                    if (date) {
+                        const status = timesheetStatus[date];
+                        document.getElementById('question').textContent = `Did you complete your timesheet for ${day}?`;
+                        document.getElementById('yes').style.display = 'inline-block';
+                        document.getElementById('no').style.display = 'inline-block';
+                        document.getElementById('yes').onclick = () => {
+                            timesheetStatus[date] = 'yes';
+                            updateCalendar();
+                        };
+                        document.getElementById('no').onclick = () => {
+                            timesheetStatus[date] = 'no';
+                            updateCalendar();
+                        };
+                    }
+                });
+            });
+
+            updateCalendar();
+        });
+    </script>
+</body>
+</html>
